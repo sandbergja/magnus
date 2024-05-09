@@ -10,9 +10,7 @@ use std::{
 
 #[cfg(windows)]
 use rb_sys::rb_w32_sysinit;
-use rb_sys::{
-    ruby_cleanup, ruby_exec_node, ruby_process_options, ruby_set_script_name, ruby_setup,
-};
+use rb_sys::{ruby_cleanup, ruby_exec_node, ruby_options, ruby_set_script_name, ruby_setup};
 
 use crate::{
     error::{protect, Error},
@@ -132,16 +130,16 @@ pub unsafe fn init() -> Cleanup {
 unsafe fn init_options(opts: &[&str]) {
     let mut argv = vec![CString::new("ruby").unwrap()];
     argv.extend(opts.iter().map(|s| CString::new(*s).unwrap()));
-    // let mut argv = argv
-    //     .iter()
-    //     .map(|cs| cs.as_ptr() as *mut _)
-    //     .collect::<Vec<_>>();
+    let mut argv = argv
+        .iter()
+        .map(|cs| cs.as_ptr() as *mut _)
+        .collect::<Vec<_>>();
     let mut node = 0 as _;
-    protect(|| {
-        // node = ruby_process_options(argv.len() as i32, argv.as_mut_ptr());
-        Ruby::get_unchecked().qnil()
-    })
-    .unwrap();
+    // protect(|| {
+    node = ruby_options(argv.len() as i32, argv.as_mut_ptr());
+    // Ruby::get_unchecked().qnil()
+    // })
+    // .unwrap();
     if ruby_exec_node(node) != 0 {
         panic!("Ruby init code failed");
     };
